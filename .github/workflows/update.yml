@@ -1,0 +1,21 @@
+name: FactLine_Auto_Update
+on:
+  schedule:
+    - cron: '0 * * * *' # 1時間に1回実行
+  workflow_dispatch: # 手動実行ボタン
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: pip install requests google-generativeai feedparser
+      - name: Run script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          WEBAPP_URL: ${{ secrets.WEBAPP_URL }}
+        run: python main.py
