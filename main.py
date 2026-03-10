@@ -4,6 +4,7 @@ import google.generativeai as genai
 import feedparser
 import json
 import re
+import time
 
 # 1. 準備
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
@@ -11,26 +12,14 @@ WEBAPP_URL = os.getenv("WEBAPP_URL")
 
 # 2. AIの設定
 genai.configure(api_key=GEMINI_KEY)
-# 最もエラーが起きにくい名前に固定します
 model = genai.GenerativeModel('gemini-2.0-flash')
+
 def analyze_and_send():
-    # Googleニュースから取得
     feed = feedparser.parse("https://news.google.com/rss/search?q=world+news&hl=en-US&gl=US&ceid=US:en")
     
-    for entry in feed.entries[:3]:
-        prompt = f"""
-        Analyze the following news and output in Japanese JSON format.
-        News: {entry.title}
-        
-        Output format (STRICT):
-        {{
-            "title_en": "{entry.title}",
-            "summary_jp": "1.事象 2.背景 3.影響 を各20文字以内の3行で",
-            "trust_level": "🔵(確定)/🟡(未確認)/🔴(疑い)",
-            "impact": "今後の経済への影響を1行で",
-            "link": "{entry.link}"
-        }}
-        """
+    # 制限にかかりにくくするため、まずは「最新の1件」だけでテストします
+    for entry in feed.entries[:1]: 
+        prompt = f"Analyze and output in Japanese JSON: {entry.title}" # プロンプトを短くして負荷を減らす
         
         try:
             response = model.generate_content(prompt)
@@ -38,14 +27,18 @@ def analyze_and_send():
             
             if match:
                 data = json.loads(match.group())
-                # スプレッドシートに送信
                 res = requests.post(WEBAPP_URL, json=data)
-                print(f"送信結果: {res.status_code}")
+                print(f"成功！送信結果: {res.status_code}")
             else:
-                print("JSONが見つかりませんでした")
+                # JSONじゃなくても、要約文があればそのまま送る工夫
+                data = {"title_en": entry.title, "summary_jp": response.text[:50], "link": entry.link}
+                requests.post(WEBAPP_URL, json=data)
+                print("要約文として送信しました")
                 
         except Exception as e:
             print(f"AIエラー: {e}")
+        
+        time.sleep(2) # 2秒待機（これ大事！）
 
 if __name__ == "__main__":
     analyze_and_send()
