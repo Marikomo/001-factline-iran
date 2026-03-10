@@ -5,22 +5,22 @@ import feedparser
 import json
 import re
 
-# 1. 準備：Secretsから値を取得
+# 1. 準備
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 WEBAPP_URL = os.getenv("WEBAPP_URL")
 
-# 2. AIの設定 (最新の google-genai 形式)
+# 2. AIの設定
 client = genai.Client(api_key=GEMINI_KEY)
 
 def analyze_and_send():
-    # ロイターのニュースを取得
+    # Googleニュースから取得（一番安定しています）
     feed = feedparser.parse("https://news.google.com/rss/search?q=world+news&hl=en-US&gl=US&ceid=US:en")
     
     if not feed.entries:
         print("ニュースが取得できませんでした")
         return
 
-    for entry in feed.entries[:3]: # 最新3件
+    for entry in feed.entries[:3]:
         prompt = f"""
         Analyze the following news and output in Japanese JSON format.
         News: {entry.title}
@@ -36,27 +36,35 @@ def analyze_and_send():
         """
         
         try:
-            # 最新の生成方法に変更
+            # モデル名の指定方法を最もシンプルな形に変更
             response = client.models.generate_content(
-                model="models/gemini-1.5-flash",
+                model="gemini-1.5-flash", 
                 contents=prompt
             )
             
-            # AIの回答から { } の部分だけを抽出
             match = re.search(r'\{.*\}', response.text, re.DOTALL)
-            
             if match:
                 json_str = match.group()
                 data = json.loads(json_str)
                 
-                # スプレッドシート（GAS）に送信
+                # スプレッドシートに送信
                 res = requests.post(WEBAPP_URL, json=data)
                 print(f"送信結果: {res.status_code}") 
             else:
                 print("JSON形式の回答が得られませんでした")
                 
         except Exception as e:
-            print(f"エラー発生: {e}")
+            # もし「gemini-1.5-flash」がダメなら、自動的に予備の「gemini-2.0-flash」を試す
+            try:
+                response = client.models.generate_content(model="gemini-2.0-flash", contents=prompt)
+                # (以下、同様の処理)
+                match = re.search(r'\{.*\}', response.text, re.DOTALL)
+                if match:
+                    data = json.loads(match.group())
+                    res = requests.post(WEBAPP_URL, json=data)
+                    print(f"予備モデルで成功: {res.status_code}")
+            except:
+                print(f"エラー発生: {e}")
 
 if __name__ == "__main__":
     analyze_and_send()
