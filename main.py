@@ -14,7 +14,7 @@ client = genai.Client(api_key=GEMINI_KEY)
 
 def analyze_and_send():
     # ロイターのニュースを取得
-    feed = feedparser.parse("https://www.reuters.com/arc/outboundfeeds/rss/topics/world/")
+    feed = feedparser.parse("https://news.google.com/rss/search?q=world+news&hl=en-US&gl=US&ceid=US:en")
     
     if not feed.entries:
         print("ニュースが取得できませんでした")
