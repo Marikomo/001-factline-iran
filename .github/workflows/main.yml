@@ -3,7 +3,7 @@ name: FactLine_Auto_Update
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0,12 * * *' # 1日2回自動実行（必要に応じて調整）
+    - cron: '0 0,12 * * *'
 
 jobs:
   build:
@@ -19,9 +19,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install feedparser requests
+          pip install feedparser requests google-generativeai
 
       - name: Run news script
         env:
           WEBAPP_URL: ${{ secrets.WEBAPP_URL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python main.py
