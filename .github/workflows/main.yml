@@ -1,21 +1,16 @@
 name: FactLine_Auto_Update
+
 on:
-  schedule:
-    - cron: '0 * * * *' # 1時間に1回実行
-  workflow_dispatch: # 手動実行ボタン
+  workflow_dispatch:
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-      - name: Install dependencies
-        run: pip install requests google-generativeai feedparser
-      - name: Run script
+      - name: Post Test Data
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          WEBAPP_URL: ${{ secrets.WEBAPP_URL }}
-        run: python main.py
+          MY_URL: ${{ secrets.WEBAPP_URL }}
+        run: |
+          curl -L -X POST "$MY_URL" \
+          -H "Content-Type: application/json" \
+          -d '{"title_en":"Test","summary_jp":"成功です","trust_level":"High","impact":"Low","link":"https://ex.com"}'
