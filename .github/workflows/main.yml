@@ -2,8 +2,6 @@ name: FactLine_Auto_Update
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 0,12 * * *'
 
 jobs:
   build:
@@ -15,11 +13,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'  # バージョンを新しくしました
 
       - name: Install dependencies
         run: |
-          pip install feedparser requests google-generativeai
+          pip install feedparser requests google-genai  # 最新のAIライブラリに変更
 
       - name: Run news script
         env:
