@@ -12,8 +12,7 @@ WEBAPP_URL = os.getenv("WEBAPP_URL")
 # 2. AIの設定
 genai.configure(api_key=GEMINI_KEY)
 # 最もエラーが起きにくい名前に固定します
-model = genai.GenerativeModel('gemini-1.5-flash')
-
+model = genai.GenerativeModel('gemini-2.0-flash')
 def analyze_and_send():
     # Googleニュースから取得
     feed = feedparser.parse("https://news.google.com/rss/search?q=world+news&hl=en-US&gl=US&ceid=US:en")
