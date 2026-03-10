@@ -11,7 +11,7 @@ WEBAPP_URL = os.getenv("WEBAPP_URL")
 
 # 2. 旧来の安定した設定方法
 genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel('gemini-1.5-flash')
+model = genai.GenerativeModel('gemini-1.5-pro')
 
 def analyze_and_send():
     # Googleニュース（安定）
