@@ -17,7 +17,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install feedparser requests google-genai
+          pip install feedparser requests google-generativeai
 
       - name: Run news script
         env:
