@@ -13,11 +13,11 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'  # バージョンを新しくしました
+          python-version: '3.10'
 
       - name: Install dependencies
         run: |
-          pip install feedparser requests google-genai  # 最新のAIライブラリに変更
+          pip install feedparser requests google-genai
 
       - name: Run news script
         env:
