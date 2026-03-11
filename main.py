@@ -1,46 +1,32 @@
 import os
 import requests
-from google import genai
 import feedparser
-import json
-import re
 
-# 1. 準備
-GEMINI_KEY = os.getenv("GEMINI_API_KEY")
+# SecretsからURLだけ取得
 WEBAPP_URL = os.getenv("WEBAPP_URL")
 
-# 2. アメリカ拠点（v1）を明示的に指定して接続
-client = genai.Client(
-    api_key=GEMINI_KEY,
-    http_options={'api_version': 'v1'}
-)
-
-def analyze_and_send():
+def simple_send():
+    # Googleニュース（US版）から取得
     feed = feedparser.parse("https://news.google.com/rss/search?q=world+news&hl=en-US&gl=US&ceid=US:en")
     
-    for entry in feed.entries[:1]: 
-        prompt = f"Analyze this news and output in Japanese JSON format: {entry.title}"
-        
+    if not feed.entries:
+        print("ニュースが見つかりませんでした")
+        return
+
+    # 最新の3件を送信
+    for entry in feed.entries[:3]:
+        data = {
+            "title_en": entry.title,
+            "summary_jp": "（AI制限中のため、原文タイトルを参照してください）",
+            "trust_level": "🌐",
+            "impact": "News fetched successfully",
+            "link": entry.link
+        }
         try:
-            # モデル名を指定して実行
-            response = client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt
-            )
-            
-            match = re.search(r'\{.*\}', response.text, re.DOTALL)
-            if match:
-                data = json.loads(match.group())
-                res = requests.post(WEBAPP_URL, json=data)
-                print(f"成功！送信結果: {res.status_code}")
-            else:
-                summary = response.text[:100].replace('\n', ' ')
-                data = {"title_en": entry.title, "summary_jp": summary, "link": entry.link}
-                requests.post(WEBAPP_URL, json=data)
-                print("成功（テキスト送信）")
-                
+            res = requests.post(WEBAPP_URL, json=data)
+            print(f"送信成功: {res.status_code}")
         except Exception as e:
-            print(f"AIエラー発生: {e}")
+            print(f"エラー: {e}")
 
 if __name__ == "__main__":
-    analyze_and_send()
+    simple_send()
