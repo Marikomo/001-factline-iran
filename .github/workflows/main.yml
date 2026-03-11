@@ -2,21 +2,21 @@ name: FactLine_Auto_Update
 
 on:
   schedule:
-    # 1. 日本時間 午前6時 (UTC 21:00)
+    # 日本時間 午前6時 (UTC 21:00)
     - cron: '0 21 * * *'
-    # 2. 日本時間 午後18時 (UTC 09:00)
+    # 日本時間 午後18時 (UTC 09:00)
     - cron: '0 9 * * *'
-  workflow_dispatch: # 手動ボタンも残しておきます
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4  # v3からv4へアップデート
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5  # v4からv5へアップデート
         with:
           python-version: '3.11'
 
