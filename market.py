@@ -6,15 +6,13 @@ from datetime import datetime
 # 送信先URL
 WEBAPP_URL = os.getenv("WEBAPP_URL")
 
-def get_market_data():
-    # 取得したい銘柄のリスト
-    symbols = {
-        "USDJPY": "JPY=X",
-        "Gold": "GC=F",
-        "CrudeOil": "CL=F",
-        "S&P500": "^GSPC",
-        "SOX": "^SOX",
-        "NaturalGas": "NG=F"
+# 修正前：def get_market_data():
+# 修正後：event_nameを受け取れるようにします
+def get_market_data(event_name=""): 
+    # ... 中略 ...
+    payload = {
+        # ... 中略 ...
+        "event": event_name # results.getではなく、引数のevent_nameを使う
     }
     
     results = {"date": datetime.now().strftime("%Y-%m-%d %H:%M")}
