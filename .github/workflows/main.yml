@@ -2,10 +2,11 @@ name: FactLine_Auto_Update
 
 on:
   schedule:
-    # 毎日、日本時間の「午前9時」に実行する設定（UTC 00:00）
-    # テキサス時間（中部標準時）だと、夜の18:00か19:00頃になります
-    - cron: '0 0 * * *'
-  workflow_dispatch: # これを消さなければ、今まで通り「手動ボタン」も使えます
+    # 1. 日本時間 午前6時 (UTC 21:00)
+    - cron: '0 21 * * *'
+    # 2. 日本時間 午後18時 (UTC 09:00)
+    - cron: '0 9 * * *'
+  workflow_dispatch: # 手動ボタンも残しておきます
 
 jobs:
   build:
