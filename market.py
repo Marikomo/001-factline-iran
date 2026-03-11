@@ -17,20 +17,18 @@ def get_market_data():
         "NaturalGas": "NG=F"
     }
     
-    # 今日の日付と時刻（テキサスや日本の時間を意識しやすいように）
     results = {"date": datetime.now().strftime("%Y-%m-%d %H:%M")}
 
     for name, sym in symbols.items():
         try:
             ticker = yf.Ticker(sym)
-            # 最新の価格を1つだけ取得
             price = ticker.fast_info['last_price']
             results[name] = round(price, 2)
         except Exception as e:
             print(f"{name} の取得に失敗: {e}")
             results[name] = "N/A"
 
-    # スプレッドシートへ送るデータ
+    # --- ここを修正しました ---
     payload = {
         "sheetName": "MarketData",
         "date": results["date"],
@@ -39,8 +37,10 @@ def get_market_data():
         "crudeoil": results["CrudeOil"],
         "sp500": results["S&P500"],
         "sox": results["SOX"],
-        "gas": results["NaturalGas"]
+        "gas": results["NaturalGas"],
+        "event": "" # ← ここにイベント名が入る器を作りました
     }
+    # -----------------------
 
     try:
         res = requests.post(WEBAPP_URL, json=payload)
