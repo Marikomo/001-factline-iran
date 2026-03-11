@@ -6,13 +6,15 @@ from datetime import datetime
 # 送信先URL
 WEBAPP_URL = os.getenv("WEBAPP_URL")
 
-# 修正前：def get_market_data():
-# 修正後：event_nameを受け取れるようにします
-def get_market_data(event_name=""): 
-    # ... 中略 ...
-    payload = {
-        # ... 中略 ...
-        "event": event_name # results.getではなく、引数のevent_nameを使う
+def get_market_data(event_name=""):
+    # 取得したい銘柄のリスト
+    symbols = {
+        "USDJPY": "JPY=X",
+        "Gold": "GC=F",
+        "CrudeOil": "CL=F",
+        "S&P500": "^GSPC",
+        "SOX": "^SOX",
+        "NaturalGas": "NG=F"
     }
     
     results = {"date": datetime.now().strftime("%Y-%m-%d %H:%M")}
@@ -26,7 +28,7 @@ def get_market_data(event_name=""):
             print(f"{name} の取得に失敗: {e}")
             results[name] = "N/A"
 
-    # --- ここを修正しました ---
+    # スプレッドシートへ送るデータ
     payload = {
         "sheetName": "MarketData",
         "date": results["date"],
@@ -36,9 +38,8 @@ def get_market_data(event_name=""):
         "sp500": results["S&P500"],
         "sox": results["SOX"],
         "gas": results["NaturalGas"],
-        "event": "" # ← ここにイベント名が入る器を作りました
+        "event": event_name  # main.pyから受け取ったイベント名をここに入れます
     }
-    # -----------------------
 
     try:
         res = requests.post(WEBAPP_URL, json=payload)
