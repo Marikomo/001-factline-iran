@@ -1,44 +1,46 @@
 import os
 import requests
-import google.generativeai as genai
+from google import genai
 import feedparser
 import json
 import re
-import time
 
 # 1. 準備
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 WEBAPP_URL = os.getenv("WEBAPP_URL")
 
-# 2. AIの設定
-genai.configure(api_key=GEMINI_KEY)
-model = genai.GenerativeModel('gemini-2.0-flash')
+# 2. 最新の GenAI クライアント作成
+client = genai.Client(api_key=GEMINI_KEY)
 
 def analyze_and_send():
+    # Googleニュース（US版）から取得
     feed = feedparser.parse("https://news.google.com/rss/search?q=world+news&hl=en-US&gl=US&ceid=US:en")
     
-    # 制限にかかりにくくするため、まずは「最新の1件」だけでテストします
     for entry in feed.entries[:1]: 
-        prompt = f"Analyze and output in Japanese JSON: {entry.title}" # プロンプトを短くして負荷を減らす
+        prompt = f"Analyze this news and output in Japanese JSON format: {entry.title}"
         
         try:
-            response = model.generate_content(prompt)
-            match = re.search(r'\{.*\}', response.text, re.DOTALL)
+            # 最新の generate_content メソッド
+            response = client.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=prompt
+            )
             
+            # AIの回答から JSON 部分を抽出
+            match = re.search(r'\{.*\}', response.text, re.DOTALL)
             if match:
                 data = json.loads(match.group())
                 res = requests.post(WEBAPP_URL, json=data)
                 print(f"成功！送信結果: {res.status_code}")
             else:
-                # JSONじゃなくても、要約文があればそのまま送る工夫
-                data = {"title_en": entry.title, "summary_jp": response.text[:50], "link": entry.link}
+                # JSONが見つからない場合はテキストとして送信
+                summary = response.text[:100].replace('\n', ' ')
+                data = {"title_en": entry.title, "summary_jp": summary, "link": entry.link}
                 requests.post(WEBAPP_URL, json=data)
-                print("要約文として送信しました")
+                print("要約テキストを送信しました")
                 
         except Exception as e:
-            print(f"AIエラー: {e}")
-        
-        time.sleep(2) # 2秒待機（これ大事！）
+            print(f"AIエラー発生: {e}")
 
 if __name__ == "__main__":
     analyze_and_send()
