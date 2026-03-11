@@ -2,21 +2,23 @@ name: FactLine_Auto_Update
 
 on:
   schedule:
-    # 日本時間 午前6時 (UTC 21:00)
     - cron: '0 21 * * *'
-    # 日本時間 午後18時 (UTC 09:00)
     - cron: '0 9 * * *'
   workflow_dispatch:
+
+# 警告に対応するための環境変数を追加
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4  # v3からv4へアップデート
+        uses: actions/checkout@v4 # 現時点で最新
 
       - name: Set up Python
-        uses: actions/setup-python@v5  # v4からv5へアップデート
+        uses: actions/setup-python@v5 # 現時点で最新
         with:
           python-version: '3.11'
 
@@ -27,10 +29,6 @@ jobs:
       - name: Run scripts
         env:
           WEBAPP_URL: ${{ secrets.WEBAPP_URL }}
-          # 今後のためにGEMINIのキーも一応入れておくと安心です
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           python main.py
-          python market.py
-
-        
