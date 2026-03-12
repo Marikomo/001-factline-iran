@@ -1,44 +1,62 @@
 import os
 import requests
+import yfinance as yf
 import time
+from datetime import datetime
 
-# 送信先URL
 WEBAPP_URL = os.getenv("WEBAPP_URL")
 
-def get_market_data(event_name=""):
-    # 2025/06/24からの過去データ
-    past_data = [
-        ["2025-06-24 09:00", 142.50, 3.62, 2320.10, 81.20, 5450.20, 5500.10, 2.80, "起点データ"],
-        ["2025-09-24 09:00", 144.10, 3.65, 2650.50, 75.40, 5700.80, 5300.50, 2.50, "秋の推移"],
-        ["2025-12-25 09:00", 141.20, 3.60, 2710.00, 72.10, 5900.20, 5800.90, 2.30, "年末"],
-        ["2026-01-15 09:00", 145.80, 3.72, 2750.30, 85.60, 5850.10, 5400.20, 3.10, "有事警戒開始"],
-        ["2026-02-10 09:00", 149.20, 3.75, 2800.50, 88.30, 5950.50, 5200.80, 2.90, "中東緊張"],
-        ["2026-03-01 09:00", 151.40, 3.78, 2920.10, 92.50, 6050.20, 5100.40, 3.20, "3月月初"]
-    ]
+def get_market_data(event_name="過去データ一括取得"):
+    # 取得したい銘柄
+    symbols = {
+        "USDJPY": "JPY=X",
+        "ILS": "ILS=X",
+        "Gold": "GC=F",
+        "CrudeOil": "CL=F",
+        "S&P500": "^GSPC",
+        "SOX": "^SOX",
+        "NaturalGas": "NG=F"
+    }
 
-    print(f"WEBAPP_URL: {WEBAPP_URL}") # URLが読み込めているか確認
+    print("2025-06-24からのデータをダウンロード中...")
     
-    for data in past_data:
+    # 全銘柄の過去データを一括取得
+    all_data = {}
+    for name, sym in symbols.items():
+        # 2025-06-24から今日までの日足データを取得
+        df = yf.download(sym, start="2025-06-24")
+        all_data[name] = df['Close']
+        time.sleep(1) # API負荷軽減
+
+    # 最初に見つかった銘柄の日付リストを基準にする
+    first_sym = list(symbols.keys())[0]
+    dates = all_data[first_sym].index
+
+    print(f"{len(dates)}日分のデータを送信開始します...")
+
+    for d in dates:
+        date_str = d.strftime("%Y-%m-%d")
+        
+        # 各銘柄のその日の価格を取り出す
         payload = {
             "sheetName": "MarketData",
-            "date": data[0],
-            "usdjpy": data[1],
-            "ils": data[2],
-            "gold": data[3],
-            "crudeoil": data[4],
-            "sp500": data[5],
-            "sox": data[6],
-            "gas": data[7],
-            "event": data[8]
+            "date": date_str,
+            "usdjpy": round(float(all_data["USDJPY"].get(d, 0)), 2),
+            "ils": round(float(all_data["ILS"].get(d, 0)), 4), # 為替は小数第4位まで
+            "gold": round(float(all_data["Gold"].get(d, 0)), 2),
+            "crudeoil": round(float(all_data["CrudeOil"].get(d, 0)), 2),
+            "sp500": round(float(all_data["S&P500"].get(d, 0)), 2),
+            "sox": round(float(all_data["SOX"].get(d, 0)), 2),
+            "gas": round(float(all_data["NaturalGas"].get(d, 0)), 2),
+            "event": "過去データ一括インポート"
         }
-        
+
         try:
-            print(f"送信中: {data[0]}...")
-            res = requests.post(WEBAPP_URL, json=payload, timeout=10)
-            print(f"結果: {res.status_code} - {res.text}")
-            time.sleep(1)
+            res = requests.post(WEBAPP_URL, json=payload)
+            print(f"送信: {date_str} -> {res.status_code}")
+            time.sleep(0.5) # GASへの連続負荷を避ける
         except Exception as e:
-            print(f"エラー: {e}")
+            print(f"エラー ({date_str}): {e}")
 
 if __name__ == "__main__":
     get_market_data()
