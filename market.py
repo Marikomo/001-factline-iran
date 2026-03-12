@@ -7,9 +7,10 @@ from datetime import datetime
 WEBAPP_URL = os.getenv("WEBAPP_URL")
 
 def get_market_data(event_name=""):
+    # 取得したい銘柄のリスト
     symbols = {
         "USDJPY": "JPY=X",
-        "ILS": "ILS=X",      # ← 追加
+        "ILS": "ILS=X",      # イスラエル・シェケル
         "Gold": "GC=F",
         "CrudeOil": "CL=F",
         "S&P500": "^GSPC",
@@ -26,14 +27,14 @@ def get_market_data(event_name=""):
             results[name] = round(price, 2)
         except Exception as e:
             print(f"{name} の取得に失敗: {e}")
-            results[name] = "N/A"
+            results[name] = "" # 取得失敗時は空文字（グラフを0に落とさない）
 
-    # スプレッドシートへ送るデータ
-   payload = {
+    # スプレッドシートへ送るデータ（ここはすべて同じ深さのスペースにする必要があります）
+    payload = {
         "sheetName": "MarketData",
         "date": results["date"],
         "usdjpy": results["USDJPY"],
-        "ils": results["ILS"],      # ← 追加
+        "ils": results["ILS"],
         "gold": results["Gold"],
         "crudeoil": results["CrudeOil"],
         "sp500": results["S&P500"],
