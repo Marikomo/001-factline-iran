@@ -1,3 +1,4 @@
+# v2 - 過去データ強制インポート用
 import os
 import requests
 import yfinance as yf
@@ -6,23 +7,21 @@ import time
 WEBAPP_URL = os.getenv("WEBAPP_URL")
 
 def get_market_data(event_name="一括インポート"):
-    # 【強制チェック】
-    print("★★★ 過去データ一括取得モードで起動しました ★★★")
+    # これがログに出れば成功
+    print("★★★ 2025年からのデータを取得しにいきます ★★★")
     
     symbols = {
         "USDJPY": "JPY=X", "ILS": "ILS=X", "Gold": "GC=F",
         "CrudeOil": "CL=F", "S&P500": "^GSPC", "SOX": "^SOX", "NaturalGas": "NG=F"
     }
 
-    # データを取得
     all_data = {}
     for name, sym in symbols.items():
         print(f"{name}を取得中...")
         df = yf.download(sym, start="2025-06-24")
         all_data[name] = df['Close']
-        time.sleep(1)
+        time.sleep(0.5)
 
-    # 日付リスト
     dates = all_data["USDJPY"].index
     print(f"合計 {len(dates)} 日分のデータを送信します。")
 
@@ -38,12 +37,11 @@ def get_market_data(event_name="一括インポート"):
             "sp500": round(float(all_data["S&P500"].get(d, 0)), 2),
             "sox": round(float(all_data["SOX"].get(d, 0)), 2),
             "gas": round(float(all_data["NaturalGas"].get(d, 0)), 2),
-            "event": "履歴データ"
+            "event": "履歴データ(GitHub経由)"
         }
         res = requests.post(WEBAPP_URL, json=payload)
         print(f"送信完了: {date_str} ({res.status_code})")
-        time.sleep(0.5)
+        time.sleep(0.3)
 
-# この下を必ず確認！
 if __name__ == "__main__":
     get_market_data()
