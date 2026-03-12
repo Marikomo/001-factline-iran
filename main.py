@@ -1,75 +1,64 @@
 import os
 import requests
-import feedparser
+import yfinance as yf
 from datetime import datetime
-import market
-import news_ai  # ここでAI機能を読み込む
 
-# 1. AIに最新の地政学イベントを抽出させる
-# (例: "イランがホルムズ海峡付近で演習を開始")
-event_text = news_ai.get_latest_geopolitics_summary()
-
-# 2. その情報を market.py に渡して、株価と一緒にスプレッドシートへ送る
-market.get_market_data(event_text)
-# 環境変数の取得
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+# 送信先URL (GitHubのSecretsから読み込み)
 WEBAPP_URL = os.getenv("WEBAPP_URL")
 
-def get_gemini_summary(text):
-    # AIへの指示（プロンプト）
-    # ニュースの要約と一緒に、チャート用の「イベント名」も作らせます
-    prompt = f"""
-    以下のニュース群から、地政学・経済的に最も重要なニュースを要約してください。
-    また、そのニュースを一言（10文字以内）で表すチャート用の「イベント名」を1つだけ作成してください。
-    
-    出力形式：
-    EVENT: [イベント名]
-    SUMMARY:
-    [要約内容を箇条書きで]
-
-    ニュース：
-    {text}
+def get_market_data(event_name="なし"):
+    """
+    Yahoo Financeから市場データを取得し、スプレッドシートへ送信する。
+    main.pyからAI要約（event_name）を受け取って、I列に書き込みます。
     """
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
-    payload = {"contents": [{"parts": [{"text": prompt}]}]}
-    
-    try:
-        res = requests.post(url, json=payload)
-        output = res.json()['candidates'][0]['content']['parts'][0]['text']
-        return output
-    except:
-        return "EVENT: なし\nSUMMARY: 要約に失敗しました。"
-
-def main():
-    # RSSフィードからニュース取得（例としてReuters）
-    d = feedparser.parse("https://www.reutersagency.com/feed/?best-topics=political-general&post_type=best")
-    news_text = "\n".join([entry.title for entry in d.entries[:10]])
-    
-    full_output = get_gemini_summary(news_text)
-    
-    # AIの回答から「EVENT:」と「SUMMARY:」を切り分ける
-    event_name = "なし"
-    summary_jp = full_output
-    if "EVENT:" in full_output:
-        parts = full_output.split("SUMMARY:")
-        event_name = parts[0].replace("EVENT:", "").strip()
-        summary_jp = parts[1].strip() if len(parts) > 1 else full_output
-
-    # 1. ニュースをスプレッドシートに送信
-    news_payload = {
-        "title_en": "Daily Geopolitics News",
-        "summary_jp": summary_jp,
-        "trust_level": "High",
-        "impact": "Medium",
-        "link": d.entries[0].link if d.entries else ""
+    # 取得したい銘柄のリスト
+    symbols = {
+        "USDJPY": "JPY=X",
+        "ILS": "ILS=X",      # イスラエル・シェケル
+        "Gold": "GC=F",
+        "CrudeOil": "CL=F",
+        "S&P500": "^GSPC",
+        "SOX": "^SOX",
+        "NaturalGas": "NG=F"
     }
-    requests.post(WEBAPP_URL, json=news_payload)
+    
+    results = {"date": datetime.now().strftime("%Y-%m-%d %H:%M")}
 
-    # 2. 市場データを取得して、AIが決めた「event_name」を載せて送信
-    # ※market.pyの関数を呼び出します
-    print(f"抽出されたイベント: {event_name}")
-    market.get_market_data(event_name) # ここでイベント名を渡す
+    print("市場データを取得中...")
+    for name, sym in symbols.items():
+        try:
+            ticker = yf.Ticker(sym)
+            # 最新の価格を取得（fast_info['last_price'] を使用）
+            price = ticker.fast_info['last_price']
+            results[name] = round(price, 2)
+        except Exception as e:
+            print(f"{name} の取得に失敗: {e}")
+            results[name] = "" # 失敗時は空文字
+
+    # スプレッドシートへ送るデータ
+    # ※ここで event_name を payload に入れています
+    payload = {
+        "sheetName": "MarketData",
+        "date": results["date"],
+        "usdjpy": results["USDJPY"],
+        "ils": results["ILS"],
+        "gold": results["Gold"],
+        "crudeoil": results["CrudeOil"],
+        "sp500": results["S&P500"],
+        "sox": results["SOX"],
+        "gas": results["NaturalGas"],
+        "event": event_name  # AIからの要約テキストをセット
+    }
+
+    # Google Apps Script(GAS)へ送信
+    try:
+        print(f"送信データ: {payload}")
+        res = requests.post(WEBAPP_URL, json=payload)
+        print(f"市場データ送信成功: {res.status_code}")
+    except Exception as e:
+        print(f"送信エラー発生: {e}")
 
 if __name__ == "__main__":
-    main()
+    # 単体で実行した場合のテスト用
+    get_market_data("テスト実行（main.pyを経由していません）")
