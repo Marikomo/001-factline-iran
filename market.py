@@ -7,10 +7,9 @@ from datetime import datetime
 WEBAPP_URL = os.getenv("WEBAPP_URL")
 
 def get_market_data(event_name=""):
-    # 取得したい銘柄のリスト
     symbols = {
         "USDJPY": "JPY=X",
-        "ILS": "ILS=X",
+        "ILS": "ILS=X",      # ← 追加
         "Gold": "GC=F",
         "CrudeOil": "CL=F",
         "S&P500": "^GSPC",
@@ -30,16 +29,17 @@ def get_market_data(event_name=""):
             results[name] = "N/A"
 
     # スプレッドシートへ送るデータ
-    payload = {
+   payload = {
         "sheetName": "MarketData",
         "date": results["date"],
         "usdjpy": results["USDJPY"],
+        "ils": results["ILS"],      # ← 追加
         "gold": results["Gold"],
         "crudeoil": results["CrudeOil"],
         "sp500": results["S&P500"],
         "sox": results["SOX"],
         "gas": results["NaturalGas"],
-        "event": event_name  # main.pyから受け取ったイベント名をここに入れます
+        "event": event_name
     }
 
     try:
