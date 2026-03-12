@@ -10,6 +10,7 @@ def get_market_data(event_name=""):
     # 取得したい銘柄のリスト
     symbols = {
         "USDJPY": "JPY=X",
+        "ILS": "ILS=X",
         "Gold": "GC=F",
         "CrudeOil": "CL=F",
         "S&P500": "^GSPC",
