@@ -2,8 +2,15 @@ import os
 import requests
 import feedparser
 from datetime import datetime
-import market  # market.pyを呼び出すために追加
+import market
+import news_ai  # ここでAI機能を読み込む
 
+# 1. AIに最新の地政学イベントを抽出させる
+# (例: "イランがホルムズ海峡付近で演習を開始")
+event_text = news_ai.get_latest_geopolitics_summary()
+
+# 2. その情報を market.py に渡して、株価と一緒にスプレッドシートへ送る
+market.get_market_data(event_text)
 # 環境変数の取得
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 WEBAPP_URL = os.getenv("WEBAPP_URL")
