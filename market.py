@@ -7,10 +7,9 @@ from datetime import datetime
 WEBAPP_URL = os.getenv("WEBAPP_URL")
 
 def get_market_data(event_name=""):
-    # 取得したい銘柄のリスト
     symbols = {
         "USDJPY": "JPY=X",
-        "ILS": "ILS=X",      # イスラエル・シェケル
+        "ILS": "ILS=X",
         "Gold": "GC=F",
         "CrudeOil": "CL=F",
         "S&P500": "^GSPC",
@@ -27,9 +26,9 @@ def get_market_data(event_name=""):
             results[name] = round(price, 2)
         except Exception as e:
             print(f"{name} の取得に失敗: {e}")
-            results[name] = "" # 取得失敗時は空文字（グラフを0に落とさない）
+            results[name] = ""
 
-    # スプレッドシートへ送るデータ（ここはすべて同じ深さのスペースにする必要があります）
+    # ↓ ここから下の行の「左側の空白」を上の results = ... と完全に揃えます
     payload = {
         "sheetName": "MarketData",
         "date": results["date"],
@@ -45,6 +44,7 @@ def get_market_data(event_name=""):
 
     try:
         res = requests.post(WEBAPP_URL, json=payload)
+        print(f"送信データ: {payload}")  # これで中身をログに出します
         print(f"市場データ送信成功: {res.status_code}")
     except Exception as e:
         print(f"エラー発生: {e}")
