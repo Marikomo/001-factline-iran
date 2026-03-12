@@ -28,7 +28,8 @@ def get_market_data(event_name=""):
             print(f"{name} の取得に失敗: {e}")
             results[name] = ""
 
-    # ↓ ここから下の行の「左側の空白」を上の results = ... と完全に揃えます
+
+    # スプレッドシートへ送るデータ
     payload = {
         "sheetName": "MarketData",
         "date": results["date"],
@@ -39,8 +40,9 @@ def get_market_data(event_name=""):
         "sp500": results["S&P500"],
         "sox": results["SOX"],
         "gas": results["NaturalGas"],
-        "event": event_name
+        "event": event_name  # ← ここが重要！受け取った引数をそのまま入れます
     }
+
 
     try:
         res = requests.post(WEBAPP_URL, json=payload)
