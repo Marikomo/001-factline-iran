@@ -64,5 +64,7 @@ def get_market_data(event_name=""):
     except Exception as e:
         print(f"通信エラー: {e}")
 
+# 一番最後のここを修正します
 if __name__ == "__main__":
+    # カッコの中を空にするか、"定期更新" など好きな文字に変えます
     get_market_data("定期更新")
